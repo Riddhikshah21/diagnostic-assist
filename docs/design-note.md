@@ -12,6 +12,8 @@ The first useful evidence should appear within three seconds at p95. Cause group
 
 ![Diagnostic Assist system workflow](system-workflow.png)
 
+![Diagnostic Assist Detailed Architecture](Diagnostic-Assist-Architecture.png)
+
 I would begin with a modular application rather than separate microservices. The current volume does not justify the additional deployment and operational work.
 
 ## Data handling
