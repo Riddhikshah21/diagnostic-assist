@@ -103,3 +103,131 @@ It prepares a handoff containing:
 The part is presented as something to consider, not as proof that it will be required.
 
 In the original `C-48211` case, the technician found that the main contactor coil was open and replaced `CONTACTOR-M1`. The assistant did not need to make this final diagnosis. Its value was finding relevant evidence, collecting one useful detail and giving the technician a better place to start.
+
+
+# Example:
+
+## User Query:
+
+```bash
+
+diagnostic-assist \                                                    
+  --data data/sample_cases.json \             
+  --equipment-type CX-450 \
+  --equipment-family "Air Compressor CX" \
+  --query "Customer says the unit is completely dead"
+
+```
+
+## Response:
+
+```bash 
+
+{
+  "query": "Customer says the unit is completely dead",
+  "equipment_type": "CX-450",
+  "equipment_family": "Air Compressor CX",
+  "hits": [
+    {
+      "case": {
+        "case_id": "C-49040",
+        "equipment_family": "Air Compressor CX",
+        "equipment_type": "CX-450",
+        "created_at": "2026-02-18T09:02:00Z",
+        "language": "en",
+        "customer_description": "Unit dead on arrival at site, will not power up.",
+        "technician_notes": "Battery flat, 8.4V. Charged and load tested, battery failed test. Replaced battery, charging system OK.",
+        "parts_replaced": [
+          "BATT-95AH"
+        ],
+        "resolution_text": "Failed battery replaced."
+      },
+      "rrf_score": 0.04918032786885246,
+      "source_ranks": {
+        "bm25": 1,
+        "semantic": 1
+      },
+      "match_scope": "equipment_type"
+    },
+    {
+      "case": {
+        "case_id": "C-48211",
+        "equipment_family": "Air Compressor CX",
+        "equipment_type": "CX-450",
+        "created_at": "2026-01-14T08:22:00Z",
+        "language": "en",
+        "customer_description": "Unit won't start at all. No lights on the control panel.",
+        "technician_notes": "No power to panel. Main contactor coil open. Swapped contactor, unit runs.",
+        "parts_replaced": [
+          "CONTACTOR-M1"
+        ],
+        "resolution_text": "Replaced main contactor."
+      },
+      "rrf_score": 0.04788306451612903,
+      "source_ranks": {
+        "bm25": 4,
+        "semantic": 2
+      },
+      "match_scope": "equipment_type"
+    },
+    {
+      "case": {
+        "case_id": "C-48590",
+        "equipment_family": "Air Compressor CX",
+        "equipment_type": "CX-450",
+        "created_at": "2026-01-27T09:41:00Z",
+        "language": "en",
+        "customer_description": "no crank, dead panel",
+        "technician_notes": "Ground strap at frame was loose, heavy corrosion. Cleaned and retorqued. Contactor tested OK.",
+        "parts_replaced": [],
+        "resolution_text": "Loose ground strap, retorqued and treated corrosion."
+      },
+      "rrf_score": 0.047619047619047616,
+      "source_ranks": {
+        "bm25": 3,
+        "semantic": 3
+      },
+      "match_scope": "equipment_type"
+    },
+    {
+      "case": {
+        "case_id": "C-48934",
+        "equipment_family": "Air Compressor CX",
+        "equipment_type": "CX-450",
+        "created_at": "2026-02-13T14:08:00Z",
+        "language": "en",
+        "customer_description": "Machine overheats under load. No error codes displayed on the panel.",
+        "technician_notes": "Cooling fan running but airflow low, intake screen packed with dust. Cleaned screen and fins. Temps back to normal.",
+        "parts_replaced": [],
+        "resolution_text": "Blocked intake screen restricting airflow, cleaned."
+      },
+      "rrf_score": 0.03125,
+      "source_ranks": {
+        "semantic": 4
+      },
+      "match_scope": "equipment_type"
+    },
+    {
+      "case": {
+        "case_id": "C-48377",
+        "equipment_family": "Air Compressor CX",
+        "equipment_type": "CX-450",
+        "created_at": "2026-01-19T13:05:00Z",
+        "language": "de",
+        "customer_description": "Maschine startet nicht, keine Anzeige am Display.",
+        "technician_notes": "Kein Strom am Bedienfeld. Hauptschuetz defekt.",
+        "parts_replaced": [
+          "CONTACTOR-M1"
+        ],
+        "resolution_text": "Hauptschuetz getauscht."
+      },
+      "rrf_score": 0.03076923076923077,
+      "source_ranks": {
+        "semantic": 5
+      },
+      "match_scope": "equipment_type"
+    }
+  ],
+  "used_family_fallback": false,
+}
+```
