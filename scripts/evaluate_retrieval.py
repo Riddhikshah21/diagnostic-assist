@@ -122,7 +122,18 @@ def main() -> None:
             candidate_ids=candidate_ids,
             limit=result_limit,
         )
-        fused_hits = reciprocal_rank_fusion([keyword_hits, semantic_hits])
+        CANDIDATE_DEPTH = 5
+        SOURCE_WEIGHTS = {
+            "bm25": 1.0,
+            "semantic": 2.0,
+        }
+        fused_hits = reciprocal_rank_fusion(
+            [
+                keyword_hits[:CANDIDATE_DEPTH],
+                semantic_hits[:CANDIDATE_DEPTH],
+            ],
+            source_weights=SOURCE_WEIGHTS,
+        )
 
         keyword_ranks = {hit.case_id: hit.rank for hit in keyword_hits}
         keyword_scores = {hit.case_id: hit.score for hit in keyword_hits}

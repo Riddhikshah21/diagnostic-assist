@@ -68,10 +68,14 @@ The prototype uses:
 - `rank-bm25` for keyword retrieval;
 - a multilingual sentence-transformer for semantic retrieval;
 - pytest for automated tests.
-- Reciprocal Rank Fusion, the below values came from a small exploratory evaluation.:
-    candidate depth 5;
-    BM25 weight 1.0;
-    semantic weight 2.0;
+
+The prototype uses weighted Reciprocal Rank Fusion with:
+
+- candidate depth `5`;
+- BM25 weight `1.0`;
+- semantic weight `2.0`.
+
+These values came from a small exploratory evaluation and are not production-tuned parameters.
 
 The production design uses Amazon S3, OpenSearch, Bedrock, ECS Fargate, DynamoDB, EventBridge, FastAPI, React and TypeScript.
 
@@ -83,6 +87,7 @@ source .venv/bin/activate
 
 python -m pip install --upgrade pip
 python -m pip install -e ".[dev]"
+```
 
 Copy the supplied sample data to:
 

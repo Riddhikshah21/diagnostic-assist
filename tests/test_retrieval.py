@@ -129,7 +129,34 @@ def test_query_case_can_be_excluded() -> None:
 
     assert "C-48211" not in returned_ids
 
+def test_semantic_weight_changes_fusion_order() -> None:
+    keyword = [
+        SearchHit(
+            case_id="keyword-only",
+            source="bm25",
+            rank=1,
+            score=4.0,
+        )
+    ]
+    semantic = [
+        SearchHit(
+            case_id="semantic-only",
+            source="semantic",
+            rank=1,
+            score=0.8,
+        )
+    ]
 
+    results = reciprocal_rank_fusion(
+        [keyword, semantic],
+        source_weights={
+            "bm25": 1.0,
+            "semantic": 2.0,
+        },
+    )
+
+    assert results[0].case_id == "semantic-only"
+    
 def test_rrf_is_deterministic() -> None:
     keyword = [
         SearchHit(
