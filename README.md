@@ -68,6 +68,10 @@ The prototype uses:
 - `rank-bm25` for keyword retrieval;
 - a multilingual sentence-transformer for semantic retrieval;
 - pytest for automated tests.
+- Reciprocal Rank Fusion, the below values came from a small exploratory evaluation.:
+    candidate depth 5;
+    BM25 weight 1.0;
+    semantic weight 2.0;
 
 The production design uses Amazon S3, OpenSearch, Bedrock, ECS Fargate, DynamoDB, EventBridge, FastAPI, React and TypeScript.
 
@@ -80,11 +84,40 @@ source .venv/bin/activate
 python -m pip install --upgrade pip
 python -m pip install -e ".[dev]"
 
-diagnostic-assist search \
+Copy the supplied sample data to:
+
+```text
+data/sample_cases.json
+```
+
+The first semantic search downloads the multilingual embedding model. This cold start is not representative of the production design, where historical embeddings would be created offline and the API would remain warm.
+
+## Run a normal search
+
+```bash
+diagnostic-assist \
   --data data/sample_cases.json \
   --equipment-type CX-450 \
-  --query "Unit will not start and the control panel is dead"
+  --equipment-family "Air Compressor CX" \
+  --query "Customer says the unit is completely dead" \
+  --limit 5
 ```
+
+## Run leave-one-out evaluation
+
+When a historical case is used as a simulated new query, its own case ID must be excluded:
+
+```bash
+diagnostic-assist \
+  --data data/sample_cases.json \
+  --equipment-type CX-450 \
+  --equipment-family "Air Compressor CX" \
+  --query "Unit won't start at all. No lights on the control panel." \
+  --exclude-case-id C-48211 \
+  --limit 5
+```
+
+A genuine new case is not already present in the historical index, so it does not need an excluded case ID.
 
 Run the tests with:
 
@@ -97,14 +130,14 @@ pytest
 ```text
 diagnostic-assist/
 ├── docs/
-│   ├── product-experience.md
-│   ├── technical-design.md
-│   ├── evaluation.md
-│   ├── what-i-cut.md
-│   └── ai-use.md
+│   ├── design-note.md
+│   ├── product-overview.md
 ├── src/diagnostic_assist/
 ├── tests/
 ├── data/
+├── scripts/
+│   ├── evaluate_retrieval.py
+│   ├── tune_fusion.py
 ├── pyproject.toml
 └── README.md
 ```
