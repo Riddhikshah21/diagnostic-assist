@@ -1,6 +1,6 @@
 import re
 from collections import defaultdict
-from collections.abc import Sequence
+from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
 from typing import Protocol
 
@@ -211,27 +211,40 @@ class FusedCandidate:
 def reciprocal_rank_fusion(
     rankings: Sequence[Sequence[SearchHit]],
     rank_constant: int = 60,
+    source_weights: Mapping[str, float] | None = None,
 ) -> list[FusedCandidate]:
     """Combine ranked result lists without comparing raw scores."""
 
     if rank_constant < 1:
         raise ValueError("rank_constant must be positive")
 
+    weights = {
+        "bm25": 1.0,
+        "semantic": 1.0,
+    }
+
+    if source_weights is not None:
+        weights.update(source_weights)
+
+    if any(weight <= 0 for weight in weights.values()):
+        raise ValueError("source weights must be positive")
+
     scores: defaultdict[str, float] = defaultdict(float)
     source_ranks: defaultdict[str, dict[str, int]] = defaultdict(dict)
 
     for ranking in rankings:
         for hit in ranking:
+            weight = weights.get(hit.source, 1.0)
             existing_rank = source_ranks[hit.case_id].get(hit.source)
 
             if existing_rank is None:
-                scores[hit.case_id] += 1 / (rank_constant + hit.rank)
+                scores[hit.case_id] += weight / (rank_constant + hit.rank)
                 source_ranks[hit.case_id][hit.source] = hit.rank
                 continue
 
             if hit.rank < existing_rank:
-                scores[hit.case_id] -= 1 / (rank_constant + existing_rank)
-                scores[hit.case_id] += 1 / (rank_constant + hit.rank)
+                scores[hit.case_id] -= weight / (rank_constant + existing_rank)
+                scores[hit.case_id] += weight / (rank_constant + hit.rank)
                 source_ranks[hit.case_id][hit.source] = hit.rank
 
     fused = [
@@ -277,7 +290,7 @@ class HybridRetriever:
         if not candidate_ids or limit < 1:
             return []
 
-        candidate_limit = max(limit * 4, 10)
+        candidate_limit = limit
 
         keyword_hits = self._keyword.search(
             query=query,
@@ -290,7 +303,13 @@ class HybridRetriever:
             limit=candidate_limit,
         )
 
-        return reciprocal_rank_fusion([keyword_hits, semantic_hits])[:limit]
+        return reciprocal_rank_fusion(
+            [keyword_hits, semantic_hits],
+            source_weights={
+                "bm25": 1.0,
+                "semantic": 2.0,
+            },
+        )[:limit]
 
     def search(
         self,
@@ -298,6 +317,7 @@ class HybridRetriever:
         equipment_type: str,
         equipment_family: str | None = None,
         limit: int = 5,
+        exclude_case_ids: set[str] | None = None,
     ) -> EvidenceBundle:
         query = query.strip()
         equipment_type = equipment_type.strip()
@@ -310,6 +330,8 @@ class HybridRetriever:
 
         if limit < 1:
             raise ValueError("limit must be positive")
+
+        excluded_ids = exclude_case_ids or set()
 
         if equipment_family is not None:
             equipment_family = equipment_family.strip() or None
@@ -325,7 +347,9 @@ class HybridRetriever:
                 equipment_family = matching_families.pop()
 
         exact_ids = {
-            case.case_id for case in self._cases.values() if case.equipment_type == equipment_type
+            case.case_id
+            for case in self._cases.values()
+            if (case.equipment_type == equipment_type and case.case_id not in excluded_ids)
         }
 
         exact_results = self._search_scope(
@@ -352,7 +376,11 @@ class HybridRetriever:
             family_ids = {
                 case.case_id
                 for case in self._cases.values()
-                if (case.equipment_family == equipment_family and case.case_id not in exact_ids)
+                if (
+                    case.equipment_family == equipment_family
+                    and case.case_id not in exact_ids
+                    and case.case_id not in excluded_ids
+                )
             }
 
             family_results = self._search_scope(

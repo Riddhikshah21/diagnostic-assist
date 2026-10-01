@@ -35,6 +35,12 @@ def build_parser() -> argparse.ArgumentParser:
         default=5,
         help="Maximum number of results",
     )
+    parser.add_argument(
+        "--exclude-case-id",
+        action="append",
+        default=[],
+        help=("Case ID to exclude from results. May be provided more than once."),
+    )
     return parser
 
 
@@ -52,6 +58,7 @@ def main(argv: Sequence[str] | None = None) -> int:
             equipment_type=arguments.equipment_type,
             equipment_family=arguments.equipment_family,
             limit=arguments.limit,
+            exclude_case_ids=set(arguments.exclude_case_id),
         )
     except (CaseLoadError, ValueError) as exc:
         parser.error(str(exc))

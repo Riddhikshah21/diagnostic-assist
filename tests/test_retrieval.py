@@ -110,6 +110,26 @@ def test_keyword_search_does_not_use_resolution_text() -> None:
     assert results == []
 
 
+def test_query_case_can_be_excluded() -> None:
+    cases = load_cases(DATA_FILE)
+    retriever = HybridRetriever(
+        cases,
+        ControlledEmbedder(),
+    )
+
+    result = retriever.search(
+        query=("Unit won't start at all. No lights on the control panel."),
+        equipment_type="CX-450",
+        equipment_family="Air Compressor CX",
+        limit=5,
+        exclude_case_ids={"C-48211"},
+    )
+
+    returned_ids = {hit.case.case_id for hit in result.hits}
+
+    assert "C-48211" not in returned_ids
+
+
 def test_rrf_is_deterministic() -> None:
     keyword = [
         SearchHit(
